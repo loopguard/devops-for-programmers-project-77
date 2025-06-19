@@ -1,0 +1,13 @@
+redmine_port: "{{ lookup('env', 'REDMINE_EXTERNAL_PORT') }}"
+redmine_image: redmine
+redmine_db_adapter: pgsql
+
+database_host: "{{ lookup('env', 'DATABASE_HOST') }}"
+database_port: "{{ lookup('env', 'DATABASE_PORT') }}"
+database_name: "{{ lookup('env', 'DATABASE_NAME') }}"
+
+datadog_http_check_name: "app"
+datadog_site: "datadoghq.eu"
+
+pip_install_packages:
+  - name: requests

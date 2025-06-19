@@ -1,0 +1,25 @@
+- name: Generate Terraform vars
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - group_vars/webservers/vault.yml
+  tasks:
+    - name: Check required envs
+      when: lookup('env', item) == ''
+      loop:
+        - DOMAIN_PRIVATE_KEY_PATH
+        - DOMAIN_CERT_PATH
+        - SSH_PUB_KEY_PATH
+
+    - name: Check terraform.auto.tfvars exists
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../terraform/terraform.auto.tfvars"
+      register: tfvars_file
+
+    - name: Generate Terraform vars
+      ansible.builtin.template:
+        src: templates/terraform.tfvars.j2
+        dest: "{{ playbook_dir }}/../terraform/terraform.auto.tfvars"
+        mode: '640'
+      when: not tfvars_file.stat.exists

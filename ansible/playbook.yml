@@ -1,0 +1,53 @@
+- name: Setup app
+  hosts: all
+  become: true
+  roles:
+    - role: geerlingguy.pip
+    - role: geerlingguy.docker
+  pre_tasks:
+    - name: Apt update
+      ansible.builtin.apt:
+        update_cache: true
+  tasks:
+    - name: Generate .env file
+      ansible.builtin.template:
+        src: templates/redmine.env.j2
+        dest: ".env"
+        mode: '640'
+    - name: Launch app
+      community.docker.docker_container:
+        name: redmine
+        image: "{{ redmine_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ redmine_port }}:3000"
+        env_file: ".env"
+        volumes:
+          - "/usr/src/redmine/files:/usr/src/redmine/files"
+    - name: Stop and remove container
+      community.docker.docker_container:
+        name: redmine
+        state: absent
+        force_kill: true
+      tags:
+        - destroy
+
+- name: Configure datadog
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Import agent role
+      ansible.builtin.import_role:
+        name: datadog.dd.agent
+    - name: Generate healthcheck conf
+      ansible.builtin.template:
+        src: templates/conf.yaml.j2
+        dest: "/etc/datadog-agent/conf.d/http_check.d/conf.yaml"
+        mode: '0640'
+        owner: dd-agent
+        group: dd-agent
+    - name: Restart agent
+      ansible.builtin.systemd:
+        name: datadog-agent
+        state: restarted

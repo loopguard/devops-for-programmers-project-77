@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+  - name: {{ datadog_http_check_name }}
+    url: http://{{ ansible_default_ipv4.address }}
